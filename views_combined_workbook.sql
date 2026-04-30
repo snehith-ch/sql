@@ -352,42 +352,59 @@ Write your answers below each question.
 */
 
 -- L1-Q1. Create dbo.vw_active_accounts_lvw to show all columns from active accounts only.
+create view dbo.vw_active_accounts_lvw
+AS
+select * from dbo.ACCOUNT_MASTER_VW where STATUS='A'
 
 
 -- L1-Q2. Call dbo.vw_active_accounts_lvw and sort the result by CBAL in descending order.
-
+select * from dbo.vw_active_accounts_lvw ORDER BY CBAL DESC 
 
 -- L1-Q3. Alter dbo.vw_active_accounts_lvw so it returns only:
 -- ACID, CUST_NAME, BRID, CBAL, STATUS
-
+SELECT ACID, CUST_NAME, BRID, CBAL, STATUS FROM DBO.vw_active_accounts_lvw
 
 -- L1-Q4. Use sp_helptext to see the code of dbo.vw_active_accounts_lvw.
-
+sp_helptext 'dbo.vw_active_accounts_lvw'
 
 -- L1-Q5. Show all view names from sys.views.
-
+select * from sys.views
 
 -- L1-Q6. Show all stored procedure names from sys.procedures.
-
+select name from sys.procedures
 
 -- L1-Q7. Create dbo.vw_current_year_txn_lvw to show only current-year transactions.
+create view dbo.vw_current_year_txn_lvw
+AS
+SELECT TXNID, ACID, TXN_DATE, TXN_TYPE, AMOUNT
+FROM dbo.TRANSACTION_MASTER_VW
+WHERE YEAR(TXN_DATE) = YEAR(GETDATE())
+
+SELECT TXNID, ACID, TXN_DATE, TXN_TYPE, AMOUNT
+FROM dbo.TRANSACTION_MASTER_VW
+WHERE TXN_DATE >= DATEFROMPARTS(YEAR(GETDATE()), 1, 1) AND TXN_DATE < DATEFROMPARTS(YEAR(GETDATE()) + 1, 1, 1)
+-- Alternative date filtering for current year without using YEAR() function. This can be more efficient if there is an index on TXN_DATE.
 
 
 -- L1-Q8. Create dbo.vw_branch_summary_lvw with:
 -- BRID, COUNT(*) AS CUSTOMER_COUNT
-
+CREATE VIEW dbo.vw_branch_summary_lvw
+AS
+SELECT BRID, COUNT(*) AS CUSTOMER_COUNT
+FROM dbo.ACCOUNT_MASTER_VW
+GROUP BY BRID
 
 -- L1-Q9. Write a comment answer:
 -- Why is a view called a virtual table?
-
+-- A view is called a virtual table because it behaves like a table when you select from it, but it does not store its own data. Instead, it runs the underlying query on the base tables and returns fresh data every time. So, it is like a "virtual" representation of the data defined by the query.
 
 -- L1-Q10. Write a comment answer:
 -- Can ORDER BY be kept inside a normal view definition in this lesson context?
-
+-- In this lesson context, no, ORDER BY cannot be kept inside a normal view definition. If you try to include ORDER BY in the view definition, it will result in an error. Instead, you should apply ORDER BY when you query the view result, not inside the view definition itself.
 
 -- L1-Q11. Write a comment answer:
 -- Do normal views store data separately?
-
+-- No, normal views do not store data separately. They are defined by a SELECT query, and every time you select from the view, SQL Server executes that query against the base tables to return the current data. The view itself does not have its own storage for data.
 
 /*
 ==================================================
@@ -396,43 +413,76 @@ Write your answers below each question.
 */
 
 -- L2-Q1. Create dbo.vw_br1_accounts_lvw to show all columns from BR1 accounts.
-
+CREATE VIEW dbo.vw_br1_accounts_lvw
+AS
+SELECT *
+FROM dbo.ACCOUNT_MASTER_VW
+WHERE BRID = 'BR1';
 
 -- L2-Q2. Insert one new BR1 row through dbo.vw_br1_accounts_lvw.
 -- Use a new ACID value not already present in the table.
-
+INSERT INTO dbo.vw_br1_accounts_lvw (ACID, CUST_NAME, CITY, BRID, ACCOUNT_TYPE, DOO, STATUS, CBAL)
+VALUES (113, 'Customer 1', 'CITY 1', 'BR1', 'CURRENT', GETDATE(), 'A', 1000.00)
 
 -- L2-Q3. Insert one BR3 row through the same dbo.vw_br1_accounts_lvw
 -- and then query both the base table and the view to observe the behavior.
 -- This question is meant to show what happens when CHECK OPTION is not used.
-
+INSERT INTO dbo.vw_br1_accounts_lvw (ACID, CUST_NAME, CITY, BRID, ACCOUNT_TYPE, DOO, STATUS, CBAL)
+VALUES (114, 'Customer 2', 'CITY 2', 'BR3', 'SAVINGS', GETDATE(), 'A', 2000.00)
 
 -- L2-Q4. Create dbo.vw_no_txn_last_6_months_lvw
 -- to show customers who did not do any transaction in the last 6 months.
-
+create view dbo.vw_no_txn_last_6_months_lvw
+AS
+SELECT ACID, CUST_NAME, BRID, CITY, ACCOUNT_TYPE, DOO, STATUS, CBAL
+FROM dbo.ACCOUNT_MASTER_VW
+WHERE ACID NOT IN (
+    SELECT DISTINCT ACID
+    FROM dbo.TRANSACTION_MASTER_VW
+    WHERE TXN_DATE >= DATEADD(MONTH, -6, GETDATE()))
 
 -- L2-Q5. Join dbo.vw_br1_accounts_lvw with dbo.BRANCH_MASTER_VW
 -- and show ACID, CUST_NAME, BRID, BRANCH_NAME.
-
+select v.ACID, v.CUST_NAME, v.BRID, b.BRANCH_NAME
+from dbo.vw_br1_accounts_lvw as v 
+join dbo.BRANCH_MASTER_VW as b on v.BRID = b.BRID
 
 -- L2-Q6. Create dbo.vw_current_year_account_txn_lvw
 -- by joining dbo.vw_current_year_txn_lvw with dbo.ACCOUNT_MASTER_VW.
 -- Show TXNID, ACID, CUST_NAME, BRID, TXN_DATE, TXN_TYPE, AMOUNT.
-
+create view dbo.vw_current_year_account_txn_lvw
+AS
+SELECT t.TXNID, t.ACID, a.CUST_NAME, a.BRID, t.TXN_DATE, t.TXN_TYPE, t.AMOUNT
+FROM dbo.vw_current_year_txn_lvw AS t
+INNER JOIN dbo.ACCOUNT_MASTER_VW AS a
+    ON t.ACID = a.ACID
 
 -- L2-Q7. On top of dbo.vw_current_year_account_txn_lvw,
 -- write a query with GROUP BY and HAVING to show branches
 -- whose current-year total transaction amount is greater than 5000.
-
+select BRID, SUM(AMOUNT) AS TOTAL_AMOUNT
+from dbo.vw_current_year_account_txn_lvw
+group by BRID
+having SUM(AMOUNT) > 5000
 
 -- L2-Q8. Create reporting_lvw.vw_br2_accounts_lvw
 -- to show ACID, CUST_NAME, BRID, CBAL for BR2 accounts.
-
+create view reporting_lvw.vw_br2_accounts_lvw
+AS
+SELECT ACID, CUST_NAME, BRID, CBAL
+FROM dbo.ACCOUNT_MASTER_VW
+WHERE BRID = 'BR2'
 
 -- L2-Q9. Create dbo.vw_balance_labels_lvw using:
 -- CBAL * 0.05 AS BONUS_AMOUNT
 -- 'VISIBLE' AS VIEW_LABEL
 -- Make sure you give explicit aliases.
+create view dbo.vw_balance_labels_lvw
+AS
+SELECT ACID, CUST_NAME, CBAL,
+       CBAL * 0.05 AS BONUS_AMOUNT,
+       'VISIBLE' AS VIEW_LABEL
+FROM dbo.ACCOUNT_MASTER_VW
 
 
 /*
@@ -442,12 +492,17 @@ Write your answers below each question.
 */
 
 -- L3-Q1. Create dbo.vw_br1_accounts_check_lvw with WITH CHECK OPTION.
-
+create view dbo.vw_br1_accounts_check_lvw
+AS
+SELECT ACID, CUST_NAME, CITY, BRID, ACCOUNT_TYPE, DOO, STATUS, CBAL
+FROM dbo.ACCOUNT_MASTER_VW
+WHERE BRID = 'BR1'
+WITH CHECK OPTION
 
 -- L3-Q2. Write a comment answer:
 -- What should happen if someone tries to insert a BR3 row
 -- through dbo.vw_br1_accounts_check_lvw?
-
+-- If someone tries to insert a BR3 row through dbo.vw_br1_accounts_check_lvw, the insertion should fail with an error. This is because the view has the WITH CHECK OPTION, which prevents any changes through the view that would result in rows that do not satisfy the view's filter condition (in this case, BRID = 'BR1'). So, the attempt to insert a BR3 row would violate the view's filter and would be blocked by SQL Server.
 
 -- L3-Q3. Create dbo.vw_active_accounts_schema_lvw with WITH SCHEMABINDING.
 -- Use only schema-prefixed base object names and explicit column list.
