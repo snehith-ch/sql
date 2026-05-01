@@ -31,36 +31,39 @@ QUICK NOTES
 6. CAST does not use style numbers.
    CONVERT can use style numbers, especially for date and time formatting.
 
-7. COUNT(*) returns the number of rows.
+7. CAST is ANSI-standard and works across many RDBMS tools.
+   CONVERT is mainly SQL Server-specific.
+
+8. COUNT(*) returns the number of rows.
    Example:
    SELECT COUNT(*) AS TOTAL_CUSTOMERS
    FROM AMASTER;
 
-8. SUM(column) returns the total of a numeric column.
+9. SUM(column) returns the total of a numeric column.
    Example:
    SELECT SUM(CBAL) AS TOTAL_BALANCE
    FROM AMASTER;
 
-9. MIN, MAX, and AVG work on numeric or date values.
+10. MIN, MAX, and AVG work on numeric or date values.
    Example:
    SELECT MIN(CBAL) AS MIN_BALANCE,
           MAX(CBAL) AS MAX_BALANCE,
           AVG(CBAL) AS AVG_BALANCE
    FROM AMASTER;
 
-10. WHERE filters rows before aggregate functions are calculated.
+11. WHERE filters rows before aggregate functions are calculated.
     Example:
     SELECT COUNT(*) AS NYC_CUSTOMERS
     FROM AMASTER
     WHERE BRID = 'NYC';
 
-11. IN is a shortcut for multiple OR conditions.
+12. IN is a shortcut for multiple OR conditions.
     Example:
     SELECT COUNT(*) AS CUSTOMER_COUNT
     FROM AMASTER
     WHERE BRID IN ('NYC', 'LA', 'HOU');
 
-12. Basic execution order for these queries:
+13. Basic execution order for these queries:
     FROM
     WHERE
     AGGREGATE
@@ -78,11 +81,11 @@ select NAME, CBAL, NAME + ' has balance ' + CAST(CBAL as VARCHAR(30)) as BALANCE
 
 -- Q2. Show ACID, NAME, and DOO.
 -- Also show DOO converted using CONVERT with style 101.
-select ACID, NAME, DOO, CONVERT(VARCHAR(30),DOO, 101) as DOO from AMASTER
+select ACID, NAME, CONVERT(VARCHAR(30),DOO, 101) as DOO from AMASTER
 
 -- Q3. Show ACID, NAME, and DOO.
 -- Also show DOO converted using CONVERT with style 103.
-SELECT ACID, NAME, DOO, CONVERT(VARCHAR(30), DOO, 103)as DOO from AMASTER
+SELECT ACID, NAME, CONVERT(VARCHAR(30), DOO, 103)as DOO from AMASTER
 
 -- Q4. Count all customers in AMASTER.
 select count(*) as TOTAL_CUSTOMERS from AMASTER
@@ -121,6 +124,17 @@ select MIN(DOO) AS MIN, MAX(DOO) AS MAX from AMASTER
 -- CONVERT(VARCHAR(30), DOO, 103) as [Open Date].
 select NAME as [Customer Name], CONVERT(VARCHAR(30), DOO, 103) as [Open Date] from AMASTER
 
+-- Q16. Show one column that prints:
+-- USD <CBAL>
+-- for every row using CONVERT.
+
+
+-- Q17. Show DOO converted using CONVERT without a style number.
+
+
+-- Q18. Count all customers and give the output column an alias with spaces:
+-- [Total Customers]
+
 /*
 OPTIONAL CHALLENGE
 
@@ -137,5 +151,8 @@ select NAME, CONVERT(varchar(30), DOO, 101) as DOO_101, CONVERT(VARCHAR(30), DOO
 4. Write in comments:
    execution order is FROM -> WHERE -> AGGREGATE -> SELECT
 select 'execution order is FROM -> WHERE -> AGGREGATE -> SELECT' as comments from AMASTER
+
+5. Write in comments:
+   when CAST is preferred and when CONVERT is preferred.
 
 */

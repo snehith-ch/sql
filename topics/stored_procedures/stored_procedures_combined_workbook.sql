@@ -391,7 +391,7 @@ END;
 sp_help SP_ACCOUNT_MASTER
 
 -- Q11. Use sp_helptext on any stored procedure you created.
-exec sp_helptext dbo.usp_sp_get_customer_balance;
+sp_helptext dbo.usp_sp_get_customer_balance;
 
 -- Q12. Write a query against SP_TXN_MASTER that returns only previous month transactions using DATEDIFF.
 

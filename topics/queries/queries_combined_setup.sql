@@ -1,0 +1,210 @@
+USE company;
+GO
+
+/*
+Queries Combined Setup
+
+Run this file first, then read queries_combined_revision_notebook.md
+and solve queries_combined_practice.sql.
+
+The tables are based on the trainer's banking, employee, sales, and item-sales
+examples, with extra small tables for joins and missing query concepts.
+*/
+
+IF OBJECT_ID('dbo.Q_TXN_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_TXN_MASTER;
+IF OBJECT_ID('dbo.Q_ACCOUNT_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_ACCOUNT_MASTER;
+IF OBJECT_ID('dbo.Q_PRODUCT_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_PRODUCT_MASTER;
+IF OBJECT_ID('dbo.Q_BRANCH_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_BRANCH_MASTER;
+IF OBJECT_ID('dbo.Q_EMPLOYEE_INFO', 'U') IS NOT NULL DROP TABLE dbo.Q_EMPLOYEE_INFO;
+IF OBJECT_ID('dbo.Q_CUSTOMER_SALES', 'U') IS NOT NULL DROP TABLE dbo.Q_CUSTOMER_SALES;
+IF OBJECT_ID('dbo.Q_ITEM_SALES', 'U') IS NOT NULL DROP TABLE dbo.Q_ITEM_SALES;
+IF OBJECT_ID('dbo.Q_COURSE_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_COURSE_MASTER;
+IF OBJECT_ID('dbo.Q_STUDENT_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_STUDENT_MASTER;
+IF OBJECT_ID('dbo.Q_ENROLLMENT_MASTER', 'U') IS NOT NULL DROP TABLE dbo.Q_ENROLLMENT_MASTER;
+GO
+
+CREATE TABLE dbo.Q_BRANCH_MASTER
+(
+    BRID CHAR(3) PRIMARY KEY,
+    BRANCH_NAME VARCHAR(40) NOT NULL,
+    CITY VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE dbo.Q_PRODUCT_MASTER
+(
+    PID CHAR(2) PRIMARY KEY,
+    PRODUCT_NAME VARCHAR(40) NOT NULL,
+    MIN_BAL MONEY NOT NULL
+);
+
+CREATE TABLE dbo.Q_ACCOUNT_MASTER
+(
+    ACID INT PRIMARY KEY,
+    NAME VARCHAR(40) NOT NULL,
+    ADDRESS VARCHAR(60) NOT NULL,
+    BRID CHAR(3) NOT NULL REFERENCES dbo.Q_BRANCH_MASTER(BRID),
+    PID CHAR(2) NOT NULL REFERENCES dbo.Q_PRODUCT_MASTER(PID),
+    DOO DATETIME NOT NULL,
+    CBAL MONEY NOT NULL,
+    UBAL MONEY NOT NULL,
+    STATUS CHAR(1) NOT NULL
+);
+
+CREATE TABLE dbo.Q_TXN_MASTER
+(
+    TXN_ID INT IDENTITY(1,1) PRIMARY KEY,
+    ACID INT NOT NULL REFERENCES dbo.Q_ACCOUNT_MASTER(ACID),
+    DOT DATE NOT NULL,
+    TXN_TYPE CHAR(3) NOT NULL,
+    CHQ_NO INT NULL,
+    TXN_AMOUNT MONEY NOT NULL,
+    BRID CHAR(3) NOT NULL REFERENCES dbo.Q_BRANCH_MASTER(BRID),
+    CONSTRAINT CK_Q_TXN_TYPE CHECK (TXN_TYPE IN ('CD', 'CW', 'CQD'))
+);
+
+CREATE TABLE dbo.Q_EMPLOYEE_INFO
+(
+    EMP_ID INT PRIMARY KEY,
+    EMP_NAME VARCHAR(40) NOT NULL,
+    SALARY MONEY NOT NULL,
+    DEPT_NAME VARCHAR(30) NOT NULL,
+    GENDER CHAR(1) NOT NULL
+);
+
+CREATE TABLE dbo.Q_CUSTOMER_SALES
+(
+    SALE_ID INT IDENTITY(1,1) PRIMARY KEY,
+    DOS DATE NOT NULL,
+    CUSTOMER_ID VARCHAR(10) NOT NULL,
+    SALES_AMOUNT MONEY NOT NULL
+);
+
+CREATE TABLE dbo.Q_ITEM_SALES
+(
+    ITEM_NAME VARCHAR(30) NOT NULL,
+    COLOR VARCHAR(20) NOT NULL,
+    QTY INT NOT NULL
+);
+
+CREATE TABLE dbo.Q_COURSE_MASTER
+(
+    COURSE_ID INT PRIMARY KEY,
+    COURSE_NAME VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE dbo.Q_STUDENT_MASTER
+(
+    STUDENT_ID INT PRIMARY KEY,
+    STUDENT_NAME VARCHAR(40) NOT NULL,
+    ORIGIN VARCHAR(20) NOT NULL,
+    STUDENT_TYPE VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE dbo.Q_ENROLLMENT_MASTER
+(
+    ENROLLMENT_ID INT IDENTITY(1,1) PRIMARY KEY,
+    STUDENT_ID INT NOT NULL REFERENCES dbo.Q_STUDENT_MASTER(STUDENT_ID),
+    COURSE_ID INT NOT NULL REFERENCES dbo.Q_COURSE_MASTER(COURSE_ID),
+    DOE DATE NOT NULL,
+    FEE_PAID CHAR(1) NOT NULL,
+    GRADE CHAR(1) NULL
+);
+GO
+
+INSERT INTO dbo.Q_BRANCH_MASTER VALUES
+('BR1', 'Hyderabad Main', 'Hyderabad'),
+('BR2', 'Bengaluru Central', 'Bengaluru'),
+('BR3', 'Chennai South', 'Chennai'),
+('BR4', 'Mumbai West', 'Mumbai');
+
+INSERT INTO dbo.Q_PRODUCT_MASTER VALUES
+('SB', 'Savings Bank', 1000),
+('CA', 'Current Account', 5000),
+('FD', 'Fixed Deposit', 0),
+('LN', 'Loan Account', 0);
+
+INSERT INTO dbo.Q_ACCOUNT_MASTER VALUES
+(101, 'Billion Rao', 'Ameerpet', 'BR1', 'SB', '2019-01-10 09:15:00', 15000, 15000, 'A'),
+(102, 'Simrit Kaur', 'Indiranagar', 'BR2', 'SB', '2020-02-15 10:20:00', 50000, 55000, 'A'),
+(103, 'Bhaskar Jogi', 'Madhapur', 'BR1', 'CA', '2018-03-20 11:30:00', 75000, 75000, 'A'),
+(104, 'Ravina Das', 'Velachery', 'BR3', 'SB', '2021-04-05 12:40:00', 9000, 12000, 'A'),
+(105, 'John Mathew', 'Andheri', 'BR4', 'FD', '2017-05-12 14:00:00', 125000, 125000, 'A'),
+(106, 'Lata Sharma', 'Whitefield', 'BR2', 'SB', '2022-06-18 15:10:00', 8000, 8000, 'A'),
+(107, 'Peter Joseph', 'Begumpet', 'BR1', 'CA', '2020-07-21 16:25:00', 125000, 130000, 'A'),
+(108, 'Mithilesh Gupta', 'T Nagar', 'BR3', 'SB', '2021-08-25 17:35:00', 45000, 45000, 'A'),
+(109, 'Kavya Nair', 'Koramangala', 'BR2', 'LN', '2023-09-28 18:45:00', 3000, 3000, 'I'),
+(110, 'Rahman Ali', 'Banjara Hills', 'BR1', 'SB', '2024-10-30 08:05:00', 25000, 26000, 'A'),
+(111, 'Anika Shah', 'Adyar', 'BR3', 'CA', '2019-11-11 09:55:00', 75000, 75000, 'A'),
+(112, 'Mark Lee', 'Powai', 'BR4', 'SB', '2020-12-01 10:05:00', 15000, 17000, 'C');
+
+INSERT INTO dbo.Q_TXN_MASTER (ACID, DOT, TXN_TYPE, CHQ_NO, TXN_AMOUNT, BRID) VALUES
+(101, '2021-01-12', 'CD', NULL, 5000, 'BR1'),
+(101, '2021-02-08', 'CW', NULL, 2000, 'BR1'),
+(101, '2021-03-14', 'CQD', 7751, 3000, 'BR2'),
+(102, '2021-01-20', 'CD', NULL, 12000, 'BR2'),
+(102, '2021-04-16', 'CW', NULL, 4500, 'BR2'),
+(103, '2021-02-11', 'CW', NULL, 6000, 'BR1'),
+(103, '2021-05-21', 'CD', NULL, 18000, 'BR1'),
+(104, '2021-03-09', 'CW', NULL, 800, 'BR3'),
+(105, '2021-06-03', 'CD', NULL, 10000, 'BR4'),
+(105, '2021-07-03', 'CW', NULL, 2500, 'BR4'),
+(106, '2022-06-20', 'CD', NULL, 8000, 'BR2'),
+(107, '2022-07-15', 'CQD', 8812, 5000, 'BR1'),
+(108, '2023-08-01', 'CD', NULL, 11000, 'BR3'),
+(110, '2024-10-31', 'CD', NULL, 25000, 'BR1'),
+(111, '2024-11-05', 'CW', NULL, 10000, 'BR3');
+
+INSERT INTO dbo.Q_EMPLOYEE_INFO VALUES
+(1, 'John', 10000, 'HR', 'M'),
+(2, 'Girish', 12000, 'Sales', 'M'),
+(3, 'Manath', 8000, 'Sales', 'M'),
+(4, 'Salman', 14000, 'HR', 'M'),
+(5, 'Rathan', 9000, 'HR', 'M'),
+(6, 'Peter', 11000, 'Sales', 'M'),
+(7, 'Lata', 13000, 'Finance', 'F'),
+(8, 'Kavya', 9000, 'Finance', 'F');
+
+INSERT INTO dbo.Q_CUSTOMER_SALES (DOS, CUSTOMER_ID, SALES_AMOUNT) VALUES
+('2020-01-12', 'C1', 1000),
+('2020-01-20', 'C2', 1200),
+('2020-02-07', 'C3', 500),
+('2020-02-15', 'C1', 300),
+('2020-02-21', 'C4', 750),
+('2020-03-02', 'C5', 1500),
+('2020-03-22', 'C6', 8000),
+('2020-03-25', 'C4', 7000),
+('2020-03-26', 'C2', 1200),
+('2020-04-03', 'C3', 900),
+('2020-04-06', 'C7', 2100);
+
+INSERT INTO dbo.Q_ITEM_SALES VALUES
+('Chair', 'Black', 35),
+('Chair', 'Red', 50),
+('Table', 'Black', 75),
+('Table', 'Red', 20),
+('Table', 'Blue', 15),
+('Cupboard', 'Black', 18);
+
+INSERT INTO dbo.Q_COURSE_MASTER VALUES
+(301, 'SQL Server'),
+(302, 'MSBI'),
+(303, 'Power BI'),
+(304, 'Java');
+
+INSERT INTO dbo.Q_STUDENT_MASTER VALUES
+(201, 'Simrit Kaur', 'India', 'Online'),
+(202, 'Ravina Das', 'India', 'Classroom'),
+(203, 'Mark Lee', 'USA', 'Online'),
+(204, 'John Miller', 'USA', 'Online');
+
+INSERT INTO dbo.Q_ENROLLMENT_MASTER (STUDENT_ID, COURSE_ID, DOE, FEE_PAID, GRADE) VALUES
+(201, 301, '2024-01-10', 'Y', 'A'),
+(201, 302, '2024-02-12', 'Y', 'B'),
+(202, 301, '2024-01-20', 'Y', 'A'),
+(203, 303, '2024-03-05', 'N', NULL),
+(204, 301, '2024-03-15', 'Y', 'B'),
+(204, 304, '2024-04-15', 'N', NULL);
+GO
+
+SELECT 'Queries combined setup completed' AS SETUP_STATUS;
+GO
