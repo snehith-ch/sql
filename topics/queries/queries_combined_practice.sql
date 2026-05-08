@@ -18,13 +18,13 @@ LEVEL 1: BASIC SELECT, WHERE, ORDER BY
 */
 
 -- Q1. Show ACID, NAME, BRID, and STATUS for all accounts.
-
+select ACID, NAME, BRID, STATUS from <table name>
 
 -- Q2. Show all columns for accounts opened in branch BR2.
-
+select * from <table name> where BRID = BR2
 
 -- Q3. Show ACID, NAME, PID, and CBAL for active accounts only.
-
+select ACID, NAME, PID, CBAL from <table name> where STATUS = A
 
 -- Q4. Show accounts where CBAL is greater than 30000, sorted by CBAL descending.
 
